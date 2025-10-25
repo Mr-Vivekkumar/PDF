@@ -1,0 +1,119 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
+All colors MUST be HSL.
+*/
+
+@layer base {
+  :root {
+    /* Maersk-inspired maritime blue theme */
+    --background: 0 0% 98%;
+    --foreground: 215 25% 15%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 215 25% 15%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 215 25% 15%;
+
+    /* Deep maritime blue - Maersk brand color */
+    --primary: 211 100% 27%;
+    --primary-foreground: 0 0% 100%;
+    
+    /* Ocean cyan accent */
+    --secondary: 193 82% 31%;
+    --secondary-foreground: 0 0% 100%;
+
+    --muted: 210 20% 94%;
+    --muted-foreground: 215 15% 45%;
+
+    /* Vibrant accent for interactive elements */
+    --accent: 193 82% 31%;
+    --accent-foreground: 0 0% 100%;
+
+    /* Yellow highlight for PDF annotations */
+    --highlight: 48 100% 67%;
+    --highlight-foreground: 215 25% 15%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 214 15% 88%;
+    --input: 214 15% 88%;
+    --ring: 211 100% 27%;
+
+    --radius: 0.5rem;
+
+    /* Custom design tokens */
+    --panel-border: 214 15% 85%;
+    --reference-hover: 193 82% 96%;
+    --pdf-bg: 0 0% 95%;
+
+    --sidebar-background: 0 0% 98%;
+    --sidebar-foreground: 240 5.3% 26.1%;
+    --sidebar-primary: 240 5.9% 10%;
+    --sidebar-primary-foreground: 0 0% 98%;
+    --sidebar-accent: 240 4.8% 95.9%;
+    --sidebar-accent-foreground: 240 5.9% 10%;
+    --sidebar-border: 220 13% 91%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+
+  .dark {
+    --background: 215 25% 12%;
+    --foreground: 0 0% 98%;
+
+    --card: 215 20% 16%;
+    --card-foreground: 0 0% 98%;
+
+    --popover: 215 20% 16%;
+    --popover-foreground: 0 0% 98%;
+
+    --primary: 193 82% 40%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 211 80% 35%;
+    --secondary-foreground: 0 0% 100%;
+
+    --muted: 215 20% 20%;
+    --muted-foreground: 215 10% 65%;
+
+    --accent: 193 82% 40%;
+    --accent-foreground: 0 0% 100%;
+
+    --highlight: 48 100% 67%;
+    --highlight-foreground: 215 25% 15%;
+
+    --destructive: 0 62% 50%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 215 20% 25%;
+    --input: 215 20% 25%;
+    --ring: 193 82% 40%;
+
+    --panel-border: 215 20% 25%;
+    --reference-hover: 193 82% 20%;
+    --pdf-bg: 215 20% 18%;
+
+    --sidebar-background: 240 5.9% 10%;
+    --sidebar-foreground: 240 4.8% 95.9%;
+    --sidebar-primary: 224.3 76.3% 48%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 240 3.7% 15.9%;
+    --sidebar-accent-foreground: 240 4.8% 95.9%;
+    --sidebar-border: 240 3.7% 15.9%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+  }
+}
