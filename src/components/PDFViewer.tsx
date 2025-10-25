@@ -55,7 +55,7 @@ const getActivePatterns = (ref: number | null, page: number) => {
 const PDFViewer = ({ activeReference }: PDFViewerProps) => {
   const [numPages, setNumPages] = useState<number>(0);
   const [pageNumber, setPageNumber] = useState<number>(15); // Start at page 15 (Condensed Income Statement)
-  const [scale, setScale] = useState<number>(1);
+  const [scale, setScale] = useState<number>(1.5);
   const [searchQuery, setSearchQuery] = useState<string>('');
   const containerRef = useRef<HTMLDivElement | null>(null);
 
@@ -260,10 +260,10 @@ const PDFViewer = ({ activeReference }: PDFViewerProps) => {
               <div
                 className="absolute bg-highlight/40 border-2 border-highlight animate-pulse"
                 style={{
-                  top: `${36 * scale}%`,
-                  left: `${8 * scale}%`,
-                  width: `${19 * scale}%`,
-                  height: `${2.5 * scale}%`,
+                  top: `36%`,
+                  left: `8%`,
+                  width: `19%`,
+                  height: `2.5%`,
                   transition: 'all 0.3s ease-in-out',
                   pointerEvents: 'none',
                 }}
@@ -273,10 +273,10 @@ const PDFViewer = ({ activeReference }: PDFViewerProps) => {
               <div
                 className="absolute bg-highlight/40 border-2 border-highlight animate-pulse"
                 style={{
-                  top: `${45 * scale}%`,
-                  left: `${7 * scale}%`,
-                  width: `${42 * scale}%`,
-                  height: `${4.5 * scale}%`,
+                  top: `45%`,
+                  left: `7%`,
+                  width: `42%`,
+                  height: `4.5%`,
                   transition: 'all 0.3s ease-in-out',
                   pointerEvents: 'none',
                 }}
@@ -286,10 +286,10 @@ const PDFViewer = ({ activeReference }: PDFViewerProps) => {
               <div
                 className="absolute bg-highlight/40 border-2 border-highlight animate-pulse"
                 style={{
-                  top: `${18 * scale}%`,
-                  left: `${7 * scale}%`,
-                  width: `${42 * scale}%`,
-                  height: `${4.8 * scale}%`,
+                  top: `18%`,
+                  left: `7%`,
+                  width: `42%`,
+                  height: `4.8%`,
                   transition: 'all 0.3s ease-in-out',
                   pointerEvents: 'none',
                 }}
