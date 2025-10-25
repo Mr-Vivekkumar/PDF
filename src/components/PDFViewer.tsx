@@ -55,7 +55,7 @@ const getActivePatterns = (ref: number | null, page: number) => {
 const PDFViewer = ({ activeReference }: PDFViewerProps) => {
   const [numPages, setNumPages] = useState<number>(0);
   const [pageNumber, setPageNumber] = useState<number>(15); // Start at page 15 (Condensed Income Statement)
-  const [scale, setScale] = useState<number>(1.5);
+  const [scale, setScale] = useState<number>(1);
   const [searchQuery, setSearchQuery] = useState<string>('');
   const containerRef = useRef<HTMLDivElement | null>(null);
 
