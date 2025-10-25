@@ -15,13 +15,8 @@ interface PDFViewerProps {
 // Helpers to highlight matching text on the text layer
 const escapeRegExp = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
-function renderHighlighted(str: string, patterns: (RegExp | string)[], searchQuery: string) {
+function renderHighlighted(str: string, patterns: (RegExp | string)[], _searchQuery: string) {
   const allPatterns = [...patterns];
-
-  // Add search query to patterns if it exists
-  if (searchQuery && searchQuery.trim()) {
-    allPatterns.push(escapeRegExp(searchQuery.trim()));
-  }
 
   if (!allPatterns.length) return str;
 
@@ -58,10 +53,27 @@ const PDFViewer = ({ activeReference }: PDFViewerProps) => {
   const [scale, setScale] = useState<number>(1.5);
   const [searchQuery, setSearchQuery] = useState<string>('');
   const containerRef = useRef<HTMLDivElement | null>(null);
+  const pdfDocRef = useRef<pdfjs.PDFDocumentProxy | null>(null);
 
   const onDocumentLoadSuccess = ({ numPages }: { numPages: number }) => {
     setNumPages(numPages);
   };
+
+  useEffect(() => {
+    // Preload PDF document for text search across pages
+    let cancelled = false;
+    const task = pdfjs.getDocument('/Maersk_Q2_2025_Interim_Report.pdf');
+    task.promise
+      .then((doc) => {
+        if (!cancelled) {
+          pdfDocRef.current = doc;
+        }
+      })
+      .catch((err) => console.warn('[PDFViewer] getDocument failed', err));
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
     if (activeReference === 1) {
@@ -112,26 +124,61 @@ const PDFViewer = ({ activeReference }: PDFViewerProps) => {
     if (!textLayer) return;
 
     const walker = document.createTreeWalker(textLayer, NodeFilter.SHOW_TEXT, null);
-    const needle = query.toLowerCase();
-    const nodesToProcess: Text[] = [];
-
+    const nodes: Text[] = [];
     let node = walker.nextNode();
     while (node) {
       if (node.nodeType === Node.TEXT_NODE && node.nodeValue && node.nodeValue.trim()) {
-        nodesToProcess.push(node as Text);
+        nodes.push(node as Text);
       }
       node = walker.nextNode();
     }
 
-    nodesToProcess.forEach((textNode) => {
-      let txt = textNode.nodeValue || '';
-      let lower = txt.toLowerCase();
-      let idx = lower.indexOf(needle);
-      // handle multiple occurrences within same text node
-      while (idx !== -1) {
-        const range = document.createRange();
-        range.setStart(textNode, idx);
-        range.setEnd(textNode, idx + needle.length);
+    if (!nodes.length) return;
+
+    const combinedLower = nodes.map((n) => n.nodeValue || '').join('').toLowerCase();
+    const needle = query.toLowerCase();
+
+    // Find all match ranges in the combined string
+    const matches: Array<{ start: number; end: number }> = [];
+    let from = 0;
+    while (true) {
+      const idx = combinedLower.indexOf(needle, from);
+      if (idx === -1) break;
+      matches.push({ start: idx, end: idx + needle.length });
+      from = idx + needle.length;
+    }
+
+    if (!matches.length) return;
+
+    // Map global indices back to node positions
+    const lengths = nodes.map((n) => (n.nodeValue ? n.nodeValue.length : 0));
+    const offsets: number[] = [];
+    let acc = 0;
+    for (let i = 0; i < lengths.length; i++) {
+      offsets.push(acc);
+      acc += lengths[i];
+    }
+
+    // Process from last to first to avoid DOM offset shifts
+    for (let m = matches.length - 1; m >= 0; m--) {
+      const { start, end } = matches[m];
+      // locate start node
+      let startNodeIdx = 0;
+      while (startNodeIdx < offsets.length - 1 && offsets[startNodeIdx + 1] <= start) startNodeIdx++;
+      const startNode = nodes[startNodeIdx];
+      const startOffsetInNode = start - offsets[startNodeIdx];
+
+      // locate end node
+      let endNodeIdx = startNodeIdx;
+      while (endNodeIdx < offsets.length - 1 && offsets[endNodeIdx + 1] < end) endNodeIdx++;
+      const endNode = nodes[endNodeIdx];
+      const endOffsetInNode = end - offsets[endNodeIdx];
+
+      // Create and surround a range across nodes
+      const range = document.createRange();
+      try {
+        range.setStart(startNode, Math.max(0, startOffsetInNode));
+        range.setEnd(endNode, Math.max(0, endOffsetInNode));
 
         const mark = document.createElement('mark');
         mark.className = 'cm-pdf-highlight';
@@ -139,25 +186,11 @@ const PDFViewer = ({ activeReference }: PDFViewerProps) => {
         mark.style.color = '#000';
         mark.style.borderRadius = '2px';
         mark.style.padding = '0 2px';
-
-        try {
-          range.surroundContents(mark);
-        } catch (err) {
-          // surroundContents can fail if range splits elements; skip gracefully
-          console.warn('surroundContents failed for range', err);
-        }
-
-        // after surrounding, advance: next text node likely after mark
-        if (mark.nextSibling && mark.nextSibling.nodeType === Node.TEXT_NODE) {
-          textNode = mark.nextSibling as Text;
-          txt = textNode.nodeValue || '';
-          lower = txt.toLowerCase();
-          idx = lower.indexOf(needle);
-        } else {
-          break;
-        }
+        range.surroundContents(mark);
+      } catch (err) {
+        console.warn('multi-node surroundContents failed', err);
       }
-    });
+    }
   };
   // ----------------------------------------------------
 
@@ -170,6 +203,34 @@ const PDFViewer = ({ activeReference }: PDFViewerProps) => {
       console.log('[PDFViewer] no query -> cleared highlights');
       return;
     }
+
+    // Attempt to navigate to the first page containing the query
+    const tryNavigate = async () => {
+      const doc = pdfDocRef.current;
+      const q = searchQuery.trim().toLowerCase();
+      if (!doc) return;
+      const total = doc.numPages || numPages || 0;
+      if (!total) return;
+
+      // start from current page and wrap
+      for (let offset = 0; offset < total; offset++) {
+        const i = ((pageNumber - 1 + offset) % total) + 1;
+        try {
+          const page = await doc.getPage(i);
+          const text = await page.getTextContent();
+          const combined = text.items.map((it: any) => (typeof it.str === 'string' ? it.str : '')).join(' ').toLowerCase();
+          if (combined.includes(q)) {
+            if (i !== pageNumber) setPageNumber(i);
+            break;
+          }
+        } catch (err) {
+          console.warn('[PDFViewer] getTextContent failed for page', i, err);
+        }
+      }
+    };
+
+    // Fire navigation asynchronously; highlighting below will run after render
+    tryNavigate();
 
     // text layer may arrive slightly after render; attempt multiple times
     let attempts = 0;
