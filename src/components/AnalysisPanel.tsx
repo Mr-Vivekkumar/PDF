@@ -231,9 +231,7 @@ const AnalysisPanel = ({ onReferenceClick, activeReference }: AnalysisPanelProps
                     </p>
                     {activeReference === 3 && (
                       <div className="mt-3 p-3 bg-yellow-500/10 rounded-md border border-yellow-500">
-                        <p className="text-xs font-medium text-yellow-400">
-                          💡 Click reference [3] highlights this line item in the PDF
-                        </p>
+                        
                       </div>
                     )}
                   </div>
